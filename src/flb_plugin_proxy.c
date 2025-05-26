@@ -426,8 +426,9 @@ static int flb_proxy_register_input(struct flb_plugin_proxy *proxy,
 int flb_proxy_custom_cb_init(struct flb_custom_instance *c_ins,
                              struct flb_config *config, void *data);
 
-static int flb_proxy_custom_cb_exit(void *custom_context, 
+static int flb_proxy_custom_cb_exit(void *custom_context,
                                     struct flb_config *config);
+static void flb_proxy_custom_cb_destroy(struct flb_custom_plugin *plugin);
 
 static int flb_proxy_register_custom(struct flb_plugin_proxy *proxy,
                                      struct flb_plugin_proxy_def *def,
@@ -456,6 +457,7 @@ static int flb_proxy_register_custom(struct flb_plugin_proxy *proxy,
      */
     custom->cb_init = flb_proxy_custom_cb_init;
     custom->cb_exit = flb_proxy_custom_cb_exit;
+    custom->cb_destroy = flb_proxy_custom_cb_destroy;
     return 0;
 }
 
@@ -706,4 +708,23 @@ int flb_proxy_custom_cb_exit(void *custom_context,
 
     flb_free(ctx);
     return ret;
+}
+
+static void flb_proxy_custom_cb_destroy(struct flb_custom_plugin *plugin)
+{
+    struct flb_plugin_proxy *proxy = (struct flb_plugin_proxy *) plugin->proxy;
+
+    if (plugin->name != NULL) {
+        flb_free(plugin->name);
+
+        plugin->name = NULL;
+    }
+
+    if (proxy->def->proxy == FLB_PROXY_GOLANG) {
+#ifdef FLB_HAVE_PROXY_GO
+        proxy_go_custom_unregister(proxy->data);
+#endif
+    }
+
+    flb_plugin_proxy_destroy(proxy);
 }
