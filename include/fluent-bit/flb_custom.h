@@ -60,6 +60,9 @@ struct flb_custom_plugin {
                    void *, struct flb_config *);
     int (*cb_exit) (void *, struct flb_config *);
 
+    /* Destroy */
+    void (*cb_destroy) (struct flb_custom_plugin *);
+
     struct mk_list _head;  /* Link to parent list (config->custom) */
 };
 
